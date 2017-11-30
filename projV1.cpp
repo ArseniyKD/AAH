@@ -168,6 +168,41 @@ float getDist(float X1, float X2, float Y1, float Y2){
 	return sqrt(pow(X1 - X2, 2) + pow(Y1 - Y2, 2));
 }
 
+void vectorReflection() {
+	int massPuck = 1;
+	int massMallet = 1;
+	float restitution = 0.9;
+	
+	float n[2] = {Puck.xCoord - Mallet1.xCoord, Puck.yCoord - Mallet1.yCoord};
+
+	//find the unit vector for the normal line
+  	float un[2] = {n[1]/sqrtf((n[1]*n[1])+(n[2]*n[2])), n[2]/sqrtf((n[1]*n[1])+(n[2]*n[2]))};
+
+	//no longer need vector n, only un, can dealocate n if necessary
+
+	//find the unit vector for the line tangent to the collision
+	float ut[2] = {-un[2], un[1]};
+
+	//compute un dot product velocity to find normal component initially
+	float vPuckin = Puck.xVelocity*un[1] + Puck.yVelocity*un[2];
+	float vMallet1in = Mallet1.xVelocity*un[1] + Mallet1.yVelocity*un[2];
+
+	//compute ut dot product velocity to find tangential component which is constant before and after collision
+	float vPuckt = Puck.xVelocity*ut[1] + Puck.yVelocity*ut[2];
+	float vMallet1t = Mallet1.xVelocity*ut[1] + Mallet1.yVelocity*ut[2];
+
+	//compute normal component after collision using formula from http://www.vobarian.com/collisions/2dcollisions2.pdf
+	float vPuckfn = (vPuckin*(puckMass-malletMass)+2*malletMass*vMallet1in)/(puckMass + malletMass);
+	float vMalletfn = (vMallet1in*(malletMass-puckMass)+2*puckMass*vPuckin)/(puckMass + malletMass);
+
+	//add the x or y portions of the normal and tangential velocities
+	Puck.xVelocity = (vPuckfn*un[1] + vPuckt*ut[1])*restitution;
+	Puck.yVelocity = (vPuckfn*un[2] + vPuckt*ut[2])*restitution;
+
+	Mallet1.xVelocity = (vMalletfn*un[1] + vMallet1t*un[1])*restitution;
+	Mallet1.yVelocity = (vMalletfn*un[2] + vMallet1t*un[2])*restitution;	
+}
+
 void checkForCollision(){
 
 
@@ -199,7 +234,7 @@ void checkForCollision(){
 		// Puck.xVelocity = Puck.xVelocity - ((((0.2)/1.1)*((Puck.xVelocity - Mallet1.xVelocity))) / pow(distance,2));
 		// Puck.yVelocity = Puck.yVelocity - ((((0.2)/1.1)*((Puck.yVelocity - Mallet1.yVelocity))) / pow(distance,2));
 		//simpleCollisionReflection();
-		velocityDirectionBasedReflection();
+		vectorReflection();
 
 	}
 
