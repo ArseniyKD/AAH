@@ -169,8 +169,8 @@ float getDist(float X1, float X2, float Y1, float Y2){
 }
 
 void vectorReflection() {
-	int massPuck = 1;
-	int massMallet = 1;
+	int puckMass = 1;
+	int malletMass = 1;
 	float restitution = 0.9;
 	
 	float n[2] = {Puck.xCoord - Mallet1.xCoord, Puck.yCoord - Mallet1.yCoord};
