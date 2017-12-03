@@ -282,21 +282,21 @@ void MalletMovement(){
 		if(yVal < JOY_CENTER - JOY_DEADZONE){
 	      //move the cursor up with a speed proportional to yVal
 	      Mallet1.yCoord -= constrain((JOY_CENTER - yVal) / 40, -speedLimitM, speedLimitM);
-		  Mallet1.yVelocity = constrain((JOY_CENTER - yVal) / 40, -speedLimitM, speedLimitM);
+		  Mallet1.yVelocity = constrain((yVal - JOY_CENTER) / 40, -speedLimitM, speedLimitM);
 	    }
 
 	    //if the joystick has been pushed down
 	    else if(yVal > JOY_CENTER + JOY_DEADZONE){
 	      //move the cursor down with a speed proportional to yVal
 	      Mallet1.yCoord += constrain((yVal - JOY_CENTER) / 40, -speedLimitM, speedLimitM);
-		  Mallet1.yVelocity = constrain((yVal - JOY_CENTER) / 40, -speedLimitM, speedLimitM);
+		Mallet1.yVelocity = constrain((yVal - JOY_CENTER) / 40, -speedLimitM, speedLimitM);
 	    }
 
 	    //if the joystick has been moved left
 	    if(xVal > JOY_CENTER + JOY_DEADZONE){
 	      //move the cursor left with a speed proportional to xVal
 	      Mallet1.xCoord -= constrain((xVal - JOY_CENTER)/40, -speedLimitM, speedLimitM);
-		  Mallet1.xVelocity = constrain((xVal - JOY_CENTER)/40, -speedLimitM, speedLimitM);
+		  Mallet1.xVelocity = constrain((JOY_CENTER - xVal)/40, -speedLimitM, speedLimitM);
 	    }
 
 	    //if the joystick has been moved right
