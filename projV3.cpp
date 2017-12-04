@@ -265,6 +265,14 @@ int main(){
 		MalletMovement(1);
 		checkForCollision(0);
 		checkForCollision(1);
+		
+		//repeat in the opposite order to prevent one mallet form being updated with
+		//priority over the other
+		PuckMovement();
+		MalletMovement(1);
+		MalletMovement(0);
+		checkForCollision(1);
+		checkForCollision(0);
 	}
 
 	return 0;
