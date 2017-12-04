@@ -31,6 +31,8 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 #define MALLET_RAD 12
 #define COLLISION_DIST 20
 
+#define BORDER 2
+#define GOAL 80
 
 float collision_X, collision_Y;
 //int collisionTime;
@@ -47,7 +49,7 @@ Circle Mallet[2];
 int speedLimit = 11;
 int speedLimitM = 8;
 
-
+void drawField();
 
 void setup(){
 	init();
@@ -56,8 +58,8 @@ void setup(){
 	tft.begin();
 
 	tft.setRotation(3);
-	tft.fillScreen(ILI9341_BLACK);
-
+	drawField();
+	
 	Puck.xCoord = DISPLAY_WIDTH / 2;
 	Puck.yCoord = DISPLAY_HEIGHT / 2;
 
@@ -76,12 +78,27 @@ void setup(){
 	tft.fillCircle(Mallet[1].xCoord, Mallet[1].yCoord, MALLET_RAD, ILI9341_BLUE);
 }
 
-
+void drawField() {
+	tft.fillScreen(ILI9341_BLACK);
+	for (int i=0; i<BORDER; i++) {
+		tft.drawRect(0+i, 0+i, DISPLAY_WIDTH-2*i, DISPLAY_HEIGHT-2*i, ILI9341_WHITE);
+	}
+	//draw middle line
+	tft.fillRect(DISPLAY_WIDTH/2-BORDER/2, BORDER, BORDER, DISPLAY_HEIGHT-2*BORDER, ILI9341_WHITE);
+	//draw left goal
+	tft.fillRect(0, DISPLAY_HEIGHT/2 - GOAL/2, BORDER, GOAL, ILI9341_BLACK);
+	//draw right goal
+	tft.fillRect(DISPLAY_WIDTH-BORDER, DISPLAY_HEIGHT/2 - GOAL/2, BORDER, GOAL, ILI9341_BLACK);
+}
 
 void PuckMovement(){
 
 	tft.fillCircle(Puck.xCoord, Puck.yCoord, PUCK_RAD, ILI9341_BLACK);
-
+	//redraw center line if puck passes over it
+	if ((Puck.xCoord-PUCK_RAD >= DISPLAY_WIDTH/2-BORDER/2-PUCK_RAD*2) && (Puck.xCoord+PUCK_RAD <= DISPLAY_WIDTH/2+BORDER/2+PUCK_RAD*2)) {
+		tft.fillRect(DISPLAY_WIDTH/2-BORDER/2, Puck.yCoord-PUCK_RAD-2, BORDER, PUCK_RAD*2+3, ILI9341_WHITE);
+	}
+	
 	Puck.xCoord += Puck.xVelocity;
 	Puck.yCoord += Puck.yVelocity;
 
@@ -92,8 +109,8 @@ void PuckMovement(){
 		Puck.yVelocity *= -0.95;
 	}
 
-	Puck.xCoord = constrain(Puck.xCoord, 0 + PUCK_RAD, DISPLAY_WIDTH - PUCK_RAD);
-	Puck.yCoord = constrain(Puck.yCoord, 0 + PUCK_RAD, DISPLAY_HEIGHT - PUCK_RAD);
+	Puck.xCoord = constrain(Puck.xCoord, BORDER + PUCK_RAD, DISPLAY_WIDTH - BORDER - PUCK_RAD - 1);
+	Puck.yCoord = constrain(Puck.yCoord, BORDER + PUCK_RAD, DISPLAY_HEIGHT - BORDER - PUCK_RAD - 1);
 
 	tft.fillCircle(Puck.xCoord,Puck.yCoord, PUCK_RAD, ILI9341_RED);
 	delay(20);
@@ -103,6 +120,9 @@ void PuckMovement(){
 void correctPuckLocation(float distance, int num){
 	if(distance < COLLISION_DIST){
 		tft.fillCircle(Puck.xCoord, Puck.yCoord, PUCK_RAD, ILI9341_BLACK);
+		if ((Puck.xCoord-PUCK_RAD >= DISPLAY_WIDTH/2-BORDER/2-PUCK_RAD*2) && (Puck.xCoord+PUCK_RAD <= DISPLAY_WIDTH/2+BORDER/2+PUCK_RAD*2)) {
+			tft.fillRect(DISPLAY_WIDTH/2-BORDER/2, Puck.yCoord-PUCK_RAD-2, BORDER, PUCK_RAD*2+3, ILI9341_WHITE);
+		}
 		if(Mallet[num].xCoord <= Puck.xCoord){
 			Puck.xCoord += COLLISION_DIST - distance;
 		}
@@ -115,6 +135,8 @@ void correctPuckLocation(float distance, int num){
 		if(Puck.yCoord < Mallet[num].yCoord){
 			Puck.yCoord -= COLLISION_DIST - distance;
 		}
+		Puck.xCoord = constrain(Puck.xCoord, BORDER + PUCK_RAD, DISPLAY_WIDTH - BORDER - PUCK_RAD - 1);
+		Puck.yCoord = constrain(Puck.yCoord, BORDER + PUCK_RAD, DISPLAY_HEIGHT - BORDER - PUCK_RAD - 1);
 
 	}
 
@@ -167,10 +189,10 @@ void vectorReflection(int num) {
 
 	float vMalletfn = (vMalletin*(malletMass-puckMass)+2*puckMass*vPuckin)/(puckMass + malletMass);
 
-	//add the x or y portions of the normal and tangential velocities
 	Puck.xVelocity = constrain((vPuckfn*un[0] + vPuckt*ut[0])*restitution, -speedLimit, speedLimit);
 	Puck.yVelocity = constrain((vPuckfn*un[1] + vPuckt*ut[1])*restitution, -speedLimit, speedLimit);
 
+	//add the x or y portions of the normal and tangential velocities
 	Mallet[num].xVelocity = (vMalletfn*un[0] + vMallett*un[0])*restitution;
 	Mallet[num].yVelocity = (vMalletfn*un[1] + vMallett*un[1])*restitution;
 
@@ -182,7 +204,6 @@ void checkForCollision(int num){
 	float distance = getDist(Mallet[num].xCoord, Puck.xCoord, Mallet[num].yCoord, Puck.yCoord);
 
 	if(distance <= COLLISION_DIST){
-		//collisionTime = millis();
 		correctPuckLocation(distance, num);
 
 		vectorReflection(num);
@@ -245,14 +266,19 @@ void MalletMovement(int num){
 	  	Mallet[num].xVelocity = constrain((JOY_CENTER - xVal)/40, -speedLimitM, speedLimitM);
     }
 
+		if (num == 0) {
+			//constrain the location of the cursor to be within the left half of the feild
+	    Mallet[num].xCoord = constrain(Mallet[num].xCoord, BORDER + MALLET_RAD, DISPLAY_WIDTH/2 - BORDER/2 - MALLET_RAD - 1);
+		}
+		else if (num == 1) {
+			//constrain the location of the cursor to be within the right half of the feild
+			Mallet[num].xCoord = constrain(Mallet[num].xCoord, DISPLAY_WIDTH/2 + BORDER/2 + MALLET_RAD + 1, DISPLAY_WIDTH - BORDER - MALLET_RAD - 1);
+		}
 		//constrain the location of the cursor to be within the screen dimensions
-    Mallet[num].xCoord = constrain(Mallet[num].xCoord, MALLET_RAD ,DISPLAY_WIDTH - MALLET_RAD);
-    //constrain the location of the cursor to be within the screen dimensions
-    Mallet[num].yCoord = constrain(Mallet[num].yCoord, MALLET_RAD ,DISPLAY_HEIGHT - MALLET_RAD);
+		Mallet[num].yCoord = constrain(Mallet[num].yCoord, BORDER + MALLET_RAD, DISPLAY_HEIGHT - BORDER - MALLET_RAD - 1);
+
+		tft.fillCircle(Mallet[num].xCoord, Mallet[num].yCoord, MALLET_RAD, ILI9341_BLUE);
 	}
-
-	tft.fillCircle(Mallet[num].xCoord, Mallet[num].yCoord, MALLET_RAD, ILI9341_BLUE);
-
 }
 
 
