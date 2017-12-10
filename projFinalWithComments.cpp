@@ -223,7 +223,7 @@ float getDist(float X1, float X2, float Y1, float Y2){
 //to the collision plane, and tangential to it. The tangential components are
 //conserved, and the normal components are calculated based on conservation of
 //momentum
-then reflects the puck from that tangent.
+//then reflects the puck from that tangent.
 void vectorReflection(Circle *Mallet) {
 	int puckMass = 0.1;
 	int malletMass = 1;
