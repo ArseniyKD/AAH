@@ -1,0 +1,120 @@
+Project Name: Arduino Air Hockey
+Name Student A: Arseniy Kouzmenkov   	ID: 1542302
+Name student B: Patrisha de Boon   	ID: 1496979
+
+
+Description:
+The intention of this project is to recreate the game Air Hockey on two Arduinos. 
+On a menu screen, the players can chose the maximum number of rounds the game can 
+be played as well as the colours associated with each player. During game play, 
+each player controls their mallet with a joystick, and the goal is to hit the 
+puck into the goal of the opposing player. The collision physics is based on 
+vector equations from Linear Algebra and Engineering Physics, and the two 
+Arduinos communicate with each other using serial port communication and a 
+functional state machine.
+
+
+Potential Restrictions:
+
+The functionality of this project relies heavily on the use of joysticks, and 
+the joystick modules used for this project are prone to falling out of the 
+breadboards to which they are connected. Should this happen, it is up to the 
+players to agree on protocol regarding how the game proceeds as the joystick is 
+being placed back into the breadboard. If a goal is made while a joystick is 
+not correctly placed, it will be counted as any other goal. 
+
+After uploading code to one or both arduinos, the random bits sent through the 
+serial ports may include the characters required by the FSM to sync the Arduinos. 
+This often causes the menu Arduino to skip to the menu screen. If this happens, 
+simply reset both Arduinos using their reset buttons.
+
+
+Required Accessories:
+
+Arduino Mega Board (AMG)
+Adafruit ILI9341 Breakout
+SainSmart JoyStick Module
+
+
+
+Wiring Instructions:
+
+To wire the Adafruit ILI9341 Breakout touchscreen display, use the following
+wiring instructions from the "Wiring for Adafruit ILI9341" document available on
+eClass:
+
+Wiring: from bottom to top on the right side (the side with the pins).
+Board Pin <---> Arduino Pin
+===========================
+GND             GND
+Vin             5V
+3Vo             NOT CONNECTED
+CLK             52
+MISO            50
+MOSI            51
+CS              10
+D/C             9
+RST             NOT CONNECTED
+Lite            NOT CONNECTED
+Y+              A2 (analog pin)
+X+              4  (digital pin)
+Y-              5  (digital pin)
+X-              A3 (analog pin)
+IM0 - IM3       NOT CONNECTED (they expect a 3.3v signal, DON'T CONNECT!)
+CCS             6
+CD              NOT CONNECTED
+
+To wire the joystick, connect analog pin A1 on the Arduino to pin VRx on the
+joystick, connect analog pin A0 to pin VRy, and connect digital pin 2 to pin SW.
+
+
+How to Run Code:
+
+Connecting Two Arduinos to One Computer:
+Step 1: Connect both Arduinos to the computer via USB
+Step 2: Run "Arduino-port-select" without the quotes to map each device to port 0 or 1
+Step 3: Navigate to the directory containing ArduinoAirHockey.cpp and a Makefile
+Step 4: Run "make upload-0" and make "make upload-1" without the quotes to
+upload to each Arduino
+
+Connecting Two Arduinos to Two Different Computers:
+Step 1: Connect each Arduino to its corresponding computer via USB
+Step 2: On both computers, navigate to the directory containing
+ArduinoAirHockey.cpp and a Makefile
+Step 3: Run "make upload" without the quotes from the terminal on each computer
+
+
+How to Use Functionality:
+
+Upon uploading, the random bits sent through the serial ports may include the
+characters required by the FSM to sync the Arduinos, causing the Arduinos to
+skip to the menu screen. If this happens, simply reset both Arduinos using their
+reset buttons.
+
+From the splash screen, press the button on the right joystick. This will bring
+up the menu screen with the default settings. To change any of the setting,
+scroll up from the play button using the right joystick until the desired setting
+tab is selected. Scroll right to begin scrolling through the options for the
+selected setting, starting from the previous selection. If you wish to select an
+option, press the right joystick button while the desired option is highlighted.
+This will leave that selected highlighted, and allow you to scroll through the
+other settings tabs. If you do not wish to change the setting from the
+previous selection, scroll left until the settings tab name is highlighted. This
+will cause the option which was selected previously to become highlighted again,
+and you may continue scrolling through the other settings tabs. To start playing
+the game, select the play button and press the right joystick button.
+
+This will cause the Scoring Screen to appear on one Arduino, and the game screen
+to appear on another. It may take a few seconds for the game screen to appear.
+From this state, each player can use their joystick to control a mallet of their
+chosen colour. The goal of the game is to hit the puck (the white circle) into
+the opposing player's goal (the space on the edge of the opposing player's side
+of the screen which is not covered by a white border). The "Best of" value chosen
+on the menu screen determines the number of goals required to win. In a best of 3
+game, 2 goals are needed to win, in a best of 5 game, 3 goals are needed, and in
+a best of 7 game, 4 goals are needed. When one player wins, the splash screen
+will appear on the game display, and a congratulatory message will appear on the
+scoring screen. Shortly after, a reset button will appear. Pressing the right
+joystick button will cause the splash screen to appear on the other Arduino as
+well. From this point, the user can chose to begin again by repeating the
+steps from above.
