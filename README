@@ -36,8 +36,8 @@ function as normal.
 Required Accessories:
 
 Arduino Mega Board (AMG)
-Adafruit ILI9341 Breakout
-SainSmart JoyStick Module
+Adafruit ILI9341 Breakout Touchscreen
+SainSmart JoyStick Module x2
 
 
 
@@ -47,7 +47,7 @@ To wire the Adafruit ILI9341 Breakout touchscreen display, use the following
 wiring instructions from the "Wiring for Adafruit ILI9341" document available on
 eClass:
 
-Wiring: from bottom to top on the right side (the side with the pins).
+Wiring: from bottom to top on the right side (the side with the pins). Do this for both Arduinos.
 Board Pin <---> Arduino Pin
 ===========================
 GND             GND
@@ -68,9 +68,23 @@ IM0 - IM3       NOT CONNECTED (they expect a 3.3v signal, DON'T CONNECT!)
 CCS             6
 CD              NOT CONNECTED
 
-To wire the joystick, connect analog pin A1 on the Arduino to pin VRx on the
+To wire the first joystick, connect analog pin A1 on the Arduino to pin VRx on the
 joystick, connect analog pin A0 to pin VRy, and connect digital pin 2 to pin SW.
+Connect the GND on the Arduino to the GND on the joystick and connect the +5V on the
+Arduino to the +5V on the joystick.
 
+To wire the second joystick, connect analog pin A11 on the Arduino to pin VRx on the 
+joystick, connect analog pin A10 to pin VRy, and connect digital pin 13 to pin SW.
+Connect the GND on the Arduino to the GND on the joystick and connect the +5V on the
+Arduino to the +5V on the joystick.
+
+Connect the two pins TX3 and RX3 on one Arduino to pins RX3 and TX3 on the other 
+respectively.
+
+Connect pin 12 to +5V on one Arduino and to GND on the other. 
+
+Connect GND on one Arduino to GND on the other in order to limit chatter on the serial
+communication ports.
 
 How to Run Code:
 
