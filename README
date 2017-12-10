@@ -28,6 +28,10 @@ serial ports may include the characters required by the FSM to sync the Arduinos
 This often causes the menu Arduino to skip to the menu screen. If this happens, 
 simply reset both Arduinos using their reset buttons.
 
+If the defaults are not changed in the menu screen, there is a change that the
+game screen may take longer than normal to appear, though the game will still 
+function as normal.
+
 
 Required Accessories:
 
