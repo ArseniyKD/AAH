@@ -43,9 +43,9 @@ SainSmart JoyStick Module x2
 
 Wiring Instructions:
 
-To wire the Adafruit ILI9341 Breakout touchscreen display, use the following
-wiring instructions from the "Wiring for Adafruit ILI9341" document available on
-eClass:
+Wire an Adafruit ILI9341 Breakout touchscreen display to each Arduino, following
+the same wiring instructions for both Arduinos, available from the "Wiring for 
+Adafruit ILI9341" document available on eClass:
 
 Wiring: from bottom to top on the right side (the side with the pins). Do this for both Arduinos.
 Board Pin <---> Arduino Pin
@@ -81,10 +81,12 @@ Arduino to the +5V on the joystick.
 Connect the two pins TX3 and RX3 on one Arduino to pins RX3 and TX3 on the other 
 respectively.
 
-Connect pin 12 to +5V on one Arduino and to GND on the other. 
+Connect pin 12 on the Arduino with the connected Joysticks to +5V, and pin 12 on the 
+other Arduino to GND. 
 
-Connect GND on one Arduino to GND on the other in order to limit chatter on the serial
+Connect GND on one Arduino to GND on the other in order to limit noise on the serial
 communication ports.
+
 
 How to Run Code:
 
