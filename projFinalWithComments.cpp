@@ -32,8 +32,8 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 #define MALLET_RAD 12
 #define COLLISION_DIST 20
 
-#define BORDER 2
-#define GOAL 80
+#define BORDER 2 //width of the border in the background
+#define GOAL 80 //width of the goal
 
 //this pin is used to figure out which arduino is the game arduino and which one
 //is the score keeping one.
@@ -219,20 +219,22 @@ float getDist(float X1, float X2, float Y1, float Y2){
 }
 
 //this method correctly reflects the puck from the mallet, keeping momentum in
-//mind. the method calculates the correct velocity changes for the puck by
-//finding the normal to the tangent to the mallet at the point of collision, then
-//reflects the puck from that tangent.
+//mind. The method finds the components of the puck and mallet velocities normal
+//to the collision plane, and tangential to it. The tangential components are
+//conserved, and the normal components are calculated based on conservation of
+//momentum
+then reflects the puck from that tangent.
 void vectorReflection(Circle *Mallet) {
 	int puckMass = 0.1;
 	int malletMass = 1;
 	float restitution = 1;
 
+	//find the line normal to the collision plane. ie. the line from the center
+	//of the mallet to the center of the puck
 	float n[2] = {Puck.xCoord - Mallet->xCoord, Puck.yCoord - Mallet->yCoord};
 
 	//find the unit vector for the normal line
   float un[2]	 = {n[0]/sqrtf((n[0]*n[0])+(n[1]*n[1])), n[1]/sqrtf((n[0]*n[0])+(n[1]*n[1]))};
-
-	//no longer need vector n, only un, can dealocate n if necessary
 
 	//find the unit vector for the line tangent to the collision
 	float ut[2] = {-un[1], un[0]};
@@ -339,7 +341,7 @@ void MalletMovement(Circle *Mallet, int n){
 	  	Mallet->xCoord = constrain(Mallet->xCoord, BORDER + MALLET_RAD, DISPLAY_WIDTH/2 - BORDER/2 - MALLET_RAD - 1);
 		}
 		else{
-		//constrain the location of the mallet to be within the right half of the feild
+			//constrain the location of the mallet to be within the right half of the feild
 			Mallet->xCoord = constrain(Mallet->xCoord, DISPLAY_WIDTH/2 + BORDER/2 + MALLET_RAD + 1, DISPLAY_WIDTH - BORDER - MALLET_RAD - 1);
 		}
 
@@ -568,16 +570,20 @@ void GameMachine(){
 
 void drawMenu();
 
+//This method draws the splash screen with the name of the game and instructions
+//for how to start
 void drawSplashScreen(){
 	tft.fillScreen(ILI9341_BLACK);
 	tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
 	tft.setTextSize(textSize+2);
 	tft.setTextWrap(false);
+	//write the name of the game
 	tft.setCursor((DISPLAY_WIDTH-6*(textSize+2)*sizeof("Arduino"))/2, DISPLAY_HEIGHT/2 - space - 2*8*(textSize+2));
 	tft.print("Arduino");
 	tft.setCursor((DISPLAY_WIDTH-6*(textSize+2)*sizeof("Air Hockey"))/2, DISPLAY_HEIGHT/2 - space - 8*(textSize+2));
 	tft.print("Air Hockey");
 
+	//write the starting instructions
 	tft.setCursor(DISPLAY_WIDTH/2-(6*(textSize)*sizeof("-- Press Right Joystick Buttonn to Start --"))/2, DISPLAY_HEIGHT/2 + space);
 	tft.setTextSize(textSize);
 	tft.print("-- Press Right Joystick Button to Start --");
@@ -586,32 +592,42 @@ void drawSplashScreen(){
 
 void menuSelect();
 
+//highlights a "Best of" option to show it is selected
 void drawHighlightBestOf(uint8_t select) {
 	tft.fillRect(DISPLAY_WIDTH - (DISPLAY_WIDTH-(6*textSize*sizeof("Player 1 Colour: ") + 2*space))*(4-select)/4-2*textSize, space*3+7*(textSize+1)-2*textSize,
 							9*textSize, 11*textSize, ILI9341_WHITE);
 	tft.setCursor(DISPLAY_WIDTH - (DISPLAY_WIDTH-(6*textSize*sizeof("Player 1 Colour: ") + 2*space))*(4-select)/4, space*3+7*(textSize+1));
 	tft.setTextColor(ILI9341_BLACK);
 
-	tft.print(2*select+1);
+	tft.print(2*select+1); //print the selected option
 }
 
+//redraws a "Best of" option without highlight to show it is not selected
 void redrawBestOf(uint8_t select) {
 	tft.fillRect(DISPLAY_WIDTH - (DISPLAY_WIDTH-(6*textSize*sizeof("Player 1 Colour: ") + 2*space))*(4-select)/4-2*textSize, space*3+7*(textSize+1)-2*textSize,
 							9*textSize, 11*textSize, ILI9341_BLACK);
 	tft.setCursor(DISPLAY_WIDTH - (DISPLAY_WIDTH-(6*textSize*sizeof("Player 1 Colour: ") + 2*space))*(4-select)/4, space*3+7*(textSize+1));
 	tft.setTextColor(ILI9341_WHITE);
 
-	tft.print(2*select+1);
+	tft.print(2*select+1); //print the selected option
 }
 
+//This method allows the user to scroll through the options for the "Best of"
+//setting, and either select their prefered option or retain the previous
+//selection and scroll though other settings
+//Note: variable select = 1, 2, or 3, for best of 3, 5, or 7 accordingly
 uint8_t bestOfSelect(uint8_t prevSelect) {
-	uint8_t select = (prevSelect-1)/2; //select = 1, 2, or 3, for 3, 5, and 7 accordingly
+	uint8_t select = (prevSelect-1)/2; //set the current selection according to the
+	//previously selected setting
 
 	delay(del);
 
+	//allow the user to scroll through the options until they exit without selecting
+	//a new option or until they select a new option
 	while(true) {
-		char direction = Serial3.read();
-		//char direction = joystick();
+		while(Serial3.available() == 0){} //wait for input from the other arduino
+		char direction = Serial3.read();//read the joystick input sent from the other arduino
+		//if the user goes right and they are not at the last entry then scroll right
 		if (direction == 'r' && select<3) {
 			redrawBestOf(select);
 
@@ -619,6 +635,7 @@ uint8_t bestOfSelect(uint8_t prevSelect) {
 			drawHighlightBestOf(select);
 			delay(del);
 		}
+		//if the use goes left and they are not at the first entry then scroll left
 		else if (direction == 'l' && select>1) {
 			redrawBestOf(select);
 
@@ -626,6 +643,8 @@ uint8_t bestOfSelect(uint8_t prevSelect) {
 			drawHighlightBestOf(select);
 			delay(del);
 		}
+		//if the user goes left from the first entry, leave the bestOf scrolling
+		//method and return the previous selection
 		else if (direction =='l' && select==1) {
 			redrawBestOf(select);
 
@@ -634,12 +653,14 @@ uint8_t bestOfSelect(uint8_t prevSelect) {
 
 			return prevSelect;//therefore use default
 		}
+		//if the user selects an entry, return their selection and leave the method
 		if (direction == 'p') {
 			return (2*select+1);
 		}
 	}
 }
 
+//highlights a colour option to show it is selected
 void drawHighlightColour(uint8_t pNum, uint8_t select) {
 	tft.fillRect(DISPLAY_WIDTH - (DISPLAY_WIDTH-(6*textSize*sizeof("Player 1 Colour: ") + 2*space))*(6-select)/7-1*textSize, //top right x coordingate
 								space*(3+2*pNum)+8*(textSize+1)+pNum*8*(textSize)-1*textSize, //top left y coordinate
@@ -649,6 +670,7 @@ void drawHighlightColour(uint8_t pNum, uint8_t select) {
 								6*textSize, 6*textSize, colour[select]);
 }
 
+//redraws a colour option without highlight to show it is not selected
 void redrawColour(uint8_t pNum, uint8_t select) {
 	tft.fillRect(DISPLAY_WIDTH - (DISPLAY_WIDTH-(6*textSize*sizeof("Player 1 Colour: ") + 2*space))*(6-select)/7-1*textSize, //top right x coordingate
 								space*(3+2*pNum)+8*(textSize+1)+pNum*8*(textSize)-1*textSize, //top left y coordinate
@@ -658,52 +680,56 @@ void redrawColour(uint8_t pNum, uint8_t select) {
 								6*textSize, 6*textSize, colour[select]);
 }
 
+//This method allows the user to scroll through the colour options for their
+//malet and player number, and select their prefered colour, or continue scrolling
+//though the other setting and retain their previous selection. This method will
+//allow scrolling for either player depending on the player number "pNum"
 uint8_t playerColourSelect(uint8_t pNum, uint8_t prevSelect) {
-	uint8_t select = prevSelect;
+	uint8_t select = prevSelect; //set the initial selection to the previous selection
 
 	delay(del);
 
+	//allow the user to scroll through the options until they select a new option
+	//or exit without selecting a new option
 	while (true) {
-		if (Serial3.available() != 0) {
-			char direction = Serial3.read();
-			//char direction = joystick();
-			if (direction=='r' && select<5) {
-				redrawColour(pNum, select);
+		while(Serial3.available() == 0){} //wait for input from the other arduino
+		char direction = Serial3.read(); //read the joystick input sent from the other arduino
+		//if the user goes right and they are not at the last entry then scroll right
+		if (direction=='r' && select<5) {
+			redrawColour(pNum, select);
 
-				select ++;
-				drawHighlightColour(pNum, select);
+			select ++;
+			drawHighlightColour(pNum, select);
 
-				delay(del);
-			}
-			else if (direction=='l' && select>0) {
-				redrawColour(pNum, select);
+			delay(del);
+		}
+		//if the use goes left and they are not at the first entry then scroll left
+		else if (direction=='l' && select>0) {
+			redrawColour(pNum, select);
 
-				select--;
-				drawHighlightColour(pNum, select);
+			select--;
+			drawHighlightColour(pNum, select);
 
-				delay(del);
-			}
-			else if (direction=='l' && select==0) {
-				redrawColour(pNum, select);
+			delay(del);
+		}
+		//if the user goes left from the first entry, leave the player colour
+		//scrolling method and return the previous selection
+		else if (direction=='l' && select==0) {
+			redrawColour(pNum, select);
 
-				select = prevSelect;
-				drawHighlightColour(pNum, select);
+			select = prevSelect;
+			drawHighlightColour(pNum, select);
 
-				if (pNum == 1) {
-					return 4; //player 1 is blue by default
-				}
-				else if (pNum == 2) {
-					return 1; //player 2 is red by default
-				}
-			}
-			if (direction == 'p') {
-				return select; //return the character representing the selected colour
-			}
+			return select;
+		}
+		//if the user selects an entry, return their selection and leave the method
+		if (direction == 'p') {
+			return select;
 		}
 	}
 }
 
-//draws the Player's new score when they are updated
+//draws the Player's new score when it is updated
 void drawScores(uint8_t score, uint8_t player) {
 	tft.setTextSize(textSize+3);
 	if (player == 1) {
@@ -723,6 +749,7 @@ void win(uint8_t player){
 	tft.setTextSize(textSize+1);
 	tft.setCursor(DISPLAY_WIDTH/2-6*(textSize+1)*(sizeof("Player 1 Won!")+1)/2, DISPLAY_HEIGHT-space*4-8*(textSize+1)*2);
 
+	//print the congragulatory message
 	if (player == 1) {
 		tft.setTextColor(colour[p1Colour]);
 		tft.print(" Player 1 Won!");
@@ -734,6 +761,7 @@ void win(uint8_t player){
 
 	delay(1000);
 
+	//print the reset button
 	tft.setTextSize(textSize+1);
 	tft.setTextColor(ILI9341_WHITE);
 	tft.fillRect(DISPLAY_WIDTH/2-6*(textSize+1)*sizeof("Reset")/2-space/2, DISPLAY_HEIGHT-space*3-8*(textSize)*2, 6*(textSize+1)*sizeof("Reset"), space*2+7*textSize, GREY);
@@ -745,6 +773,7 @@ void win(uint8_t player){
 	while (flag) {
 		while (Serial3.available() == 0) {}
 		if (Serial3.read() == 'p') { //If right joystick button is pressed
+			//redraw the reset button with different colouring to show it has been pressed
 			tft.setTextSize(textSize+1);
 			tft.setTextColor(GREY);
 			tft.fillRect(DISPLAY_WIDTH/2-6*(textSize+1)*sizeof("Reset")/2-space/2, DISPLAY_HEIGHT-space*3-8*(textSize)*2, 6*(textSize+1)*sizeof("Reset"), space*2+7*textSize, ILI9341_WHITE);
@@ -760,7 +789,8 @@ void win(uint8_t player){
 	}
 }
 
-//draws the players chosen names and starting scores, as well the scoring mode
+//draws the player numbers in their selected colours, and the players scores
+//as well the scoring mode (ie. best of 3, 5, or 7)
 void drawScoreScreen() {
 	tft.fillScreen(ILI9341_BLACK);
 
@@ -773,12 +803,12 @@ void drawScoreScreen() {
 	tft.print("Best of: ");
 	tft.print(bestOf);
 
-	//print the chosen name of Player 1 to the left
+	//print Player 1 in their chosen colour to the left
 	tft.setCursor(DISPLAY_WIDTH/3-6*(textSize+1)*sizeof("Player 1")/2-space, space*4 +8*(textSize+1));
 	tft.setTextColor(colour[p1Colour]);
 	tft.print("Player 1");
 
-	//print the chosen name of Player 2 to the right
+	//print Player 2 in their chosen colour to the right
 	tft.setCursor(DISPLAY_WIDTH*2/3-6*(textSize+1)*sizeof("Player 2")/2+space, space*4 +8*(textSize+1));
 	tft.setTextColor(colour[p2Colour]);
 	tft.print("Player 2");
@@ -789,6 +819,7 @@ void drawScoreScreen() {
 	//draw the starting scores of each player
 	drawScores(0, 1);
 	drawScores(0, 2);
+	//keep track of player scores until a player recieves the max score
 	while(P1Score < maxScore && P2Score < maxScore){
 		while(Serial3.available() == 0){}
 		char byteRead = Serial3.read();
@@ -801,6 +832,7 @@ void drawScoreScreen() {
 			drawScores(P2Score, 2);
 		}
 	}
+	//call the win method for the winning player
 	if(P1Score > P2Score){
 		win(1);
 	}
@@ -809,12 +841,15 @@ void drawScoreScreen() {
 	}
 }
 
+//draw the menu screen with default selections, then call menuSelect to allow
+//the user to scroll through the menu
 void drawMenu(){
 	tft.fillScreen(ILI9341_BLACK);
 
 	tft.setTextColor(ILI9341_WHITE);
 	tft.setTextSize(textSize+1);
 
+	//draw the names of the settings tab
 	tft.setCursor(space, space);
 	tft.print("Menu");
 
@@ -830,7 +865,7 @@ void drawMenu(){
 
 	//Vertical line between setting names and options
 	tft.fillRect(6*textSize*sizeof("Player 1 Colour: ") + 2*space, 0, BORDER, DISPLAY_HEIGHT, ILI9341_WHITE);
-	//Horizontal lines between names
+	//Horizontal lines between tabs
 	tft.fillRect(0, 7*(textSize+1) + 2*space, DISPLAY_WIDTH, BORDER, ILI9341_WHITE);
 	tft.fillRect(0, 7*(textSize+1) +7*textSize + 4*space, DISPLAY_WIDTH, BORDER, ILI9341_WHITE);
 	tft.fillRect(0, 7*(textSize+1) +2*7*textSize + 6*space, DISPLAY_WIDTH, BORDER, ILI9341_WHITE);
@@ -850,19 +885,21 @@ void drawMenu(){
 
 
 	//Print the player 1 and Player 2 colour options
-
 	for (int i=1; i<=2; i++) {
 		for (int j=0; j<6; j++) {
+			//print a white background for the default options
 			if((i==1 && j==4) || (i==2 && j==1)) {
 				tft.fillRect(DISPLAY_WIDTH - (DISPLAY_WIDTH-(6*textSize*sizeof("Player 1 Colour: ") + 2*space))*(6-j)/7-1*textSize, //top right x coordingate
 											space*(3+2*i)+8*(textSize+1)+i*8*(textSize)-1*textSize, //top left y coordinate
 											8*textSize, 8*textSize, ILI9341_WHITE);
 			}
+			//print black background for all other options
 			else {
 				tft.fillRect(DISPLAY_WIDTH - (DISPLAY_WIDTH-(6*textSize*sizeof("Player 1 Colour: ") + 2*space))*(6-j)/7-1*textSize, //top right x coordingate
 											space*(3+2*i)+8*(textSize+1)+i*8*(textSize)-1*textSize, //top left y coordinate
 											8*textSize, 8*textSize, ILI9341_BLACK);
 			}
+			//print the colours on top of their backgrounds
 			tft.fillRect(DISPLAY_WIDTH - (DISPLAY_WIDTH-(6*textSize*sizeof("Player 1 Colour: ") + 2*space))*(6-j)/7, //top right x coordingate
 										space*(3+2*i)+8*(textSize+1)+i*8*(textSize), //top left y coordinate
 										6*textSize, 6*textSize, colour[j]);
@@ -874,23 +911,30 @@ void drawMenu(){
 	tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
 	tft.print("Play");
 
-	menuSelect();
+	menuSelect(); //allow the user to scroll through the menu
 }
 
-
+//allow the user to scroll through the settings tabs, and call functions to
+//scroll through setting options when applicable
 void menuSelect() {
 	uint8_t select = 3; //select the play button by default
 	bestOf = 5;			//game is best of 5 by default
 	p1Colour = 4; //player 1 is blue by default
 	p2Colour = 1;	//player 2 is red by default
+
+	//array of characters associated with each player colour
 	char colourCharacter[] = {'m', 'r', 'y', 'g', 'b', 'c'};
 
+	//array of strings for settings names
 	String setting[] = {"Best Of: ", "Player 1 Colour", "Player 2 Colour", "Play"};
 
+	//allow the user to scroll through the settings tabs, and to scroll though
+	//the options for the selected setting if they go right from an applicable
+	//setting tab name. Start the game if the user pressed play
 	while(true) {
-		while(Serial3.available() == 0){}
-		char direction = Serial3.read();
-		//char direction = joystick();
+		while(Serial3.available() == 0){} //wait for input from the other arduino
+		char direction = Serial3.read(); //recieve joystick input from the other arduino
+		//if the user goes down and the are not at the bottom entry, scroll down
 		if (direction == 'd' && select <3) {
 			tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
 			tft.setCursor(space, space*(3+2*select)+7*(textSize+1) + select*7*textSize);
@@ -907,6 +951,7 @@ void menuSelect() {
 			tft.print(setting[select]);
 			delay(del);
 		}
+		//if the user scrolls up and they are not at the top entry, scroll up
 		else if (direction == 'u' && select>0) {
 			if (select == 3) {
 				tft.setCursor(space, DISPLAY_HEIGHT-space-7*textSize);
@@ -923,6 +968,10 @@ void menuSelect() {
 			tft.print(setting[select]);
 			delay(del);
 		}
+		//if the user scrolls right from any selection apart from "Play", redraw the
+		//settings tab name without hightlight, allow the user to scrol through the
+		//applicable settings options by calling the applicable function, record the
+		//user's selection when they are done, and highlight the setting tab name again
 		else if (direction == 'r') {
 			if (select == 0) {
 				tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
@@ -955,12 +1004,15 @@ void menuSelect() {
 				delay(del);
 			}
 		}
+		//if the user selects the play button, send the settings information to the
+		//other arduino and send the starting character 's' to start the game.
 		else if (direction == 'p' && select == 3) {
 			tft.setCursor(space, DISPLAY_HEIGHT-space-7*textSize);
 			tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
 			tft.print("Play");
 
 			delay(1000);
+			//send the user's selections to the other arduino
 			Serial3.write('b');
 			Serial3.write((char)bestOf);
 			delay(10);
@@ -970,16 +1022,14 @@ void menuSelect() {
 			Serial3.write('C');
 			Serial3.write(colourCharacter[p2Colour]);
 			delay(10);
-			Serial3.write('s');
-			//play the game
-			break;
-			//drawScoreScreen(colour[p1Colour], colour[p2Colour], bestOf);
+			Serial3.write('s'); //signal to start the game
+			break; //break from this method
 		}
 	}
 }
 
 //this is the ScoreMachine FSM. It keeps track of the current scores and the menu
-//settings. ensures that the two arduinos are synced up.
+//settings. It ensures that the two arduinos are synced up.
 void ScoreMachine(){
 	enum State {INIT, MENU, SCOREBOARD, ENDSCREEN};
 	State currentState = INIT;
