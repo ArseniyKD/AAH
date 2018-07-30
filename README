@@ -28,7 +28,7 @@ serial ports may include the characters required by the FSM to sync the Arduinos
 This often causes the menu Arduino to skip to the menu screen. If this happens, 
 simply reset both Arduinos using their reset buttons.
 
-If the defaults are not changed in the menu screen, there is a change that the
+If the defaults are not changed in the menu screen, there is a chance that the
 game screen may take longer than normal to appear, though the game will still 
 function as normal.
 
@@ -117,7 +117,7 @@ scroll up from the play button using the right joystick until the desired settin
 tab is selected. Scroll right to begin scrolling through the options for the
 selected setting, starting from the previous selection. If you wish to select an
 option, press the right joystick button while the desired option is highlighted.
-This will leave that selected highlighted, and allow you to scroll through the
+This will leave that selection highlighted, and allow you to scroll through the
 other settings tabs. If you do not wish to change the setting from the
 previous selection, scroll left until the settings tab name is highlighted. This
 will cause the option which was selected previously to become highlighted again,
